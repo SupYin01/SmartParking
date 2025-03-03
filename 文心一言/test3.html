@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文心一言 - 问答系统</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        .container {
+            width: 80%;
+            max-width: 600px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        #response {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>问答系统</h2>
+        <input type="text" id="question" placeholder="请输入您的问题">
+        <button id="askButton">提交问题</button>
+        <div id="response"></div>
+    </div>
+
+    <script>
+        document.getElementById("askButton").addEventListener("click", async () => {
+            const question = document.getElementById("question").value;
+            if (!question) {
+                alert("请输入问题！");
+                return;
+            }
+
+            // 显示加载状态
+            document.getElementById("response").style.display = "none";
+
+            try {
+                const response = await fetch("/api/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(question)
+                });
+
+                const data = await response.text();
+
+                // 展示返回的答案
+                document.getElementById("response").style.display = "block";
+                document.getElementById("response").innerText = data || "没有得到答案";
+            } catch (error) {
+                document.getElementById("response").style.display = "block";
+                document.getElementById("response").innerText = "出错了，请稍后再试！";
+            }
+        });
+    </script>
+</body>
+</html>

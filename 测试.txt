@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>校园导航</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body onload="initMap()">
+    <header>
+        <h1>校园导航</h1>
+    </header>
+    <div class="container">
+        <div class="sidebar">
+            <h3>功能菜单</h3>
+            <select id="transportation">
+                <option value="driving">驾车</option>
+                <option value="transit">公交</option>
+                <option value="walking">步行</option>
+            </select>
+            <ul>
+                <li><a href="#" onclick="showBestRoutes()">查看最佳路线</a></li>
+                <li><a href="#" onclick="campusVehicleManagement()">校园车辆管理</a></li>
+                <li><a href="campus_map_info.html">学校地图信息</a></li>
+            </ul>
+        </div>
+        <div class="content">
+            <label for="start">起点：</label>
+            <input type="text" id="start" name="start" placeholder="请输入起点关键字" onkeydown="if(event.keyCode==13) document.getElementById('search-button').click()">
+
+            <label for="end">终点：</label>
+            <input type="text" id="end" name="end" placeholder="请输入终点关键字">
+            <br>
+            <form onsubmit="searchRoute(); return false;">
+                <button type="submit" id="search-button">搜索</button>
+            </form>
+            <button type="button" id="clear-button" onclick="clearSearch()">清空</button>
+            <div id="result-box"></div>
+        </div>
+        <div class="map-container">
+            <div id="map" style="width: 100%; height: 100%;"></div>
+        </div>
+    </div>
+	
+	
+	<div class="map-container">
+	<script src="map.js"></script>
+            <div id="map" style="width: 100%; height: 100%;"></div>
+        </div>
+
+    
+    <script src="function.js"></script>
+</body>
+</html>

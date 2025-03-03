@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>校园导航</title>
+    <style>
+        /* 样式部分 */
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center; /* 居中标题内容 */
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .sidebar {
+            width: 250px;
+            padding: 20px;
+            box-sizing: border-box; /* 让 padding 在计算宽度时包含在内 */
+            height: 100vh; /* 使用视口高度作为高度 */
+            overflow: auto; /* 如果内容过多，启用滚动条 */
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+
+        .map-container {
+            flex-grow: 1;
+            height: 500px;
+            position: relative; /* 让地图容器相对定位 */
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 5px 10px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        #result-box {
+            margin-top: 10px;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+    </style>
+	
+    <script type="text/javascript" 
+		src="https://api.map.baidu.com/api?v=2.0&ak=pLik9yt1mQqgySIoGKOmvf9plouGEuKy"></script>
+    <script type="text/javascript">
+         // 初始化地图
+        function initMap() {
+            // 创建地图实例
+            map = new BMap.Map("map");
+
+            // 设置地图中心点坐标和缩放级别
+            var point = new BMap.Point(121.911858, 30.88028);
+            map.centerAndZoom(point, 18); // 调整缩放级别以适应你的需求
+
+            // 添加学校名称标注
+            var label = new BMap.Label("上海海事大学", { offset: new BMap.Size(20, -10) });
+            label.setStyle({ color: "#333", fontWeight: "bold" });
+            map.addOverlay(label);
+
+            // 启用滚轮缩放
+            map.enableScrollWheelZoom(true);
+
+            // 初始化起点和终点输入框的 Suggestion 功能
+            startSuggestion = new BMap.Autocomplete({ input: "start", location: map });
+            endSuggestion = new BMap.Autocomplete({ input: "end", location: map });
+
+            // 监听选中提示项事件，当用户选中一个提示项时，就会自动调用该函数
+            startSuggestion.addEventListener("onconfirm", function(event) {
+                var item = event.item;
+                var value = item.value;
+                startSuggestion.hide();
+            });
+
+            endSuggestion.addEventListener("onconfirm", function(event) {
+                var item = event.item;
+                var value = item.value;
+                endSuggestion.hide();
+            });
+
+            // 创建图层对象
+            var overlay = new BMap.Overlay();
+
+            // 实现图层的初始化和绘制
+            overlay.initialize = function(map) {
+                this._map = map;
+                var div = document.createElement("div");
+                div.style.position = "absolute";
+                div.style.top = "60px";
+                div.style.right = "20px";
+                div.style.width = "auto";
+                div.style.height = "auto";
+                div.style.backgroundColor = "#fff";
+                div.style.padding = "5px";
+                div.style.borderRadius = "5px";
+                div.innerHTML = "<p>欢迎使用校园导航！</p><p>在起点和终点输入框输入关键字，然后点击搜索按钮，即可打开路线规划结果。</p>";
+                map.getPanes().labelPane.appendChild(div);
+                return div;
+            };
+
+            // 将图层添加到地图中
+            map.addOverlay(overlay);
+        }
+
+
+         // 路线规划和显示函数
+       function searchRoute() {
+  // 获取起点和终点输入框中的内容
+  var start = document.getElementById("start").value;
+  var end = document.getElementById("end").value;
+
+  // 获取用户选择的交通方式
+  var transportation = document.getElementById("transportation").value;
+
+  // 创建起点和终点的地址解析器
+  var startGeo = new BMap.Geocoder();
+  var endGeo = new BMap.Geocoder();
+
+  // 将起点和终点地址解析为经纬度
+  startGeo.getPoint(start, function (startPoint) {
+    if (startPoint) {
+      // 创建起点标注
+      if (startMarker) {
+        map.removeOverlay(startMarker);
+      }
+      startMarker = new BMap.Marker(startPoint);
+      map.addOverlay(startMarker);
+      startMarker.setAnimation(BMAP_ANIMATION_BOUNCE); // 添加动画效果
+
+      // 将起点和终点坐标传入路线规划实例
+      if (driving) {
+        map.removeOverlay(driving);
+      }
+      // 根据用户选择的交通方式调用不同的路线规划实例
+      if (transportation === "driving") {
+        driving = new BMap.DrivingRoute(map, { renderOptions: { map: map, autoViewport: true } });
+        driving.setSearchCompleteCallback(function () {
+          var distance = driving.getResults().getPlan(0).getDistance(false); // 获取距离，单位：米
+          var duration = driving.getResults().getPlan(0).getDuration(false); // 获取预计时间，单位：秒
+          // 显示距离和预计时间在页面上
+          document.getElementById("distance").innerHTML = "距离：" + distance + "米";
+          document.getElementById("duration").innerHTML = "预计时间：" + duration + "秒";
+        });
+        driving.search(startPoint, endPoint);
+      } else if (transportation === "transit") {
+        transit = new BMap.TransitRoute(map, { renderOptions: { map: map, autoViewport: true } });
+        transit.setSearchCompleteCallback(function () {
+          var distance = transit.getResults().getPlan(0).getDistance(false);
+          var duration = transit.getResults().getPlan(0).getDuration(false);
+          document.getElementById("distance").innerHTML = "距离：" + distance + "米";
+          document.getElementById("duration").innerHTML = "预计时间：" + duration + "秒";
+        });
+        transit.search(startPoint, endPoint);
+      } else if (transportation === "walking") {
+        walking = new BMap.WalkingRoute(map, { renderOptions: { map: map, autoViewport: true } });
+        walking.setSearchCompleteCallback(function () {
+          var distance = walking.getResults().getPlan(0).getDistance(false);
+          var duration = walking.getResults().getPlan(0).getDuration(false);
+          document.getElementById("distance").innerHTML = "距离：" + distance + "米";
+          document.getElementById("duration").innerHTML = "预计时间：" + duration + "秒";
+        });
+        walking.search(startPoint, endPoint);
+      }
+
+      // 放大地图以适应路线
+      map.setZoom(16);
+    } else {
+      alert("起点地址解析失败，请检查输入内容！");
+    }
+  });
+
+  endGeo.getPoint(end, function (endPoint) {
+    if (endPoint) {
+      // 创建终点标注
+      if (endMarker) {
+        map.removeOverlay(endMarker);
+      }
+      endMarker = new BMap.Marker(endPoint);
+      map.addOverlay(endMarker);
+      endMarker.setAnimation(BMAP_ANIMATION_BOUNCE); // 添加动画效果
+
+      // 将起点和终点坐标传入路线规划实例
+      if (driving) {
+        map.removeOverlay(driving);
+      }
+      // 根据用户选择的交通方式调用不同的路线规划实例
+      if (transportation === "driving") {
+        driving = new BMap.DrivingRoute(map, { renderOptions: { map: map, autoViewport: true } });
+        driving.setSearchCompleteCallback(function () {
+          var distance = driving.getResults().getPlan(0).getDistance(false); // 获取距离，单位：米
+          var duration = driving.getResults().getPlan(0).getDuration(false); // 获取预计时间，单位：秒
+          // 显示距离和预计时间在页面上
+          document.getElementById("distance").innerHTML = "距离：" + distance + "米";
+          document.getElementById("duration").innerHTML = "预计时间：" + duration + "秒";
+        });
+        driving.search(startPoint, endPoint);
+      } else if (transportation === "transit") {
+        transit = new BMap.TransitRoute(map, { renderOptions: { map: map, autoViewport: true } });
+        transit.setSearchCompleteCallback(function () {
+          var distance = transit.getResults().getPlan(0).getDistance(false);
+          var duration = transit.getResults().getPlan(0).getDuration(false);
+          document.getElementById("distance").innerHTML = "距离：" + distance + "米";
+          document.getElementById("duration").innerHTML = "预计时间：" + duration + "秒";
+        });
+        transit.search(startPoint, endPoint);
+      } else if (transportation === "walking") {
+        walking = new BMap.WalkingRoute(map, { renderOptions: { map: map, autoViewport: true } });
+        walking.setSearchCompleteCallback(function () {
+          var distance = walking.getResults().getPlan(0).getDistance(false);
+          var duration = walking.getResults().getPlan(0).getDuration(false);
+          document.getElementById("distance").innerHTML = "距离：" + distance + "米";
+          document.getElementById("duration").innerHTML = "预计时间：" + duration + "秒";
+        });
+        walking.search(startPoint, endPoint);
+      }
+
+      // 放大地图以适应路线
+      map.setZoom(16);
+    } else {
+      alert("终点地址解析失败，请检查输入内容！");
+    }
+  });
+}
+
+
+        // 清空起点和终点输入框、标注和路线
+        function clearSearch() {
+            document.getElementById("start").value = "";
+            document.getElementById("end").value = "";
+
+            if (startMarker) {
+                map.removeOverlay(startMarker);
+            }
+            if (endMarker) {
+                map.removeOverlay(endMarker);
+            }
+            if (driving) {
+                map.removeOverlay(driving);
+            }
+
+            // 还原地图缩放级别和中心点
+            map.setZoom(18);
+            map.panTo(new BMap.Point(121.911858, 30.88028));
+        }
+
+        // 点击搜索按钮事件
+        document.getElementById("search-button").addEventListener("click", function() {
+            searchRoute();
+        });
+
+          // 显示最佳路线函数
+        function showBestRoutes() {
+            // 调用后端接口获取最佳路线信息
+            // 这里假设后端返回一个包含最佳路线的数组 bestRoutes，每个路线包括交通方式、距离、预计时间等信息
+
+            var bestRoutes = [
+                { mode: "步行", distance: "500m", duration: "10min" },
+                { mode: "公交", distance: "600m", duration: "15min" },
+                { mode: "骑行", distance: "400m", duration: "8min" }
+            ];
+
+            var resultBox = document.getElementById("result-box");
+            resultBox.innerHTML = "<h3>最佳路线</h3>";
+
+            // 显示 Top3 最佳路线
+            for (var i = 0; i < 3; i++) {
+                var route = bestRoutes[i];
+                resultBox.innerHTML += "<p>" + route.mode + "：距离 " + route.distance + "，预计时间 " + route.duration + "</p>";
+            }
+        }
+
+          // 校园车辆管理函数
+        function campusVehicleManagement() {
+            // 调用后端接口获取校园车辆管理信息
+            // 这里假设后端返回停车位情况、乱停车和拥堵情况等信息，并将信息显示在页面上
+            var vehicleInfo = "停车位充足，无乱停车现象，交通状况良好。";
+
+            var resultBox = document.getElementById("result-box");
+            resultBox.innerHTML = "<h3>校园车辆管理</h3>";
+            resultBox.innerHTML += "<p>" + vehicleInfo + "</p>";
+        }
+
+        // 显示学校地图信息
+        function showCampusMapInfo() {
+            // 跳转到学校地图信息页面
+            window.location.href = "campus_map_info.html";
+        }
+    </script>
+</head>
+	
+	
+	
+	
+<body onload="initMap()">
+    <header>
+        <h1>校园导航</h1>
+    </header>
+    <div class="container">
+        <div class="sidebar">
+            <h3>功能菜单</h3>
+            <select id="transportation">
+                <option value="driving">驾车</option>
+                <option value="transit">公交</option>
+                <option value="walking">步行</option>
+            </select>
+            <ul>
+                <li><a href="#" onclick="showBestRoutes()">查看最佳路线</a></li>
+                <li><a href="#" onclick="campusVehicleManagement()">校园车辆管理</a></li>
+                <li><a href="campus_map_info.html">学校地图信息</a></li>
+            </ul>
+        </div>
+        <div class="content">
+            <label for="start">起点：</label>
+            <input type="text" id="start" name="start" placeholder="请输入起点关键字" onkeydown="if(event.keyCode==13) document.getElementById('search-button').click()">
+
+            <label for="end">终点：</label>
+            <input type="text" id="end" name="end" placeholder="请输入终点关键字">
+            <br>
+            <form onsubmit="searchRoute(); return false;">
+                <button type="submit" id="search-button">搜索</button>
+            </form>
+            <button type="button" id="clear-button" onclick="clearSearch()">清空</button>
+            <div id="result-box"></div>
+        </div>
+        <div class="map-container">
+            <div id="map" style="width: 100%; height: 100%;"></div>
+        </div>
+    </div>
+</body>
+</html>

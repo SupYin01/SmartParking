@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="./TrackAnimation.js"></script>
+
+    <style>
+        body, html, #allmap {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            margin: 0;
+            font-family: "微软雅黑";
+        }
+	</style>
+
+    <style>
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .sidebar {
+            width: 250px;
+            padding: 20px;
+            box-sizing: border-box; /* 让 padding 在计算宽度时包含在内 */
+            height: 100vh; /* 使用视口高度作为高度 */
+            overflow: auto; /* 如果内容过多，启用滚动条 */
+        }
+
+        .map-container {
+            flex-grow: 1;
+            /* height: 100%; */
+            position: relative; /*让地图容器相对定位*/
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 5px 10px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        #result-box {
+            margin-top: 10px;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 5px;
+            text-align: center; /* 居中标题内容 */
+        }
+    </style>
+	
+    <title>海大路在何方</title>
+    <script type="text/javascript" src="https://api.map.baidu.com/api?type=webgl&v=2.0&ak=pLik9yt1mQqgySIoGKOmvf9plouGEuKy"></script>
+    <script src="./functions.js"></script>
+</head>
+
+
+<body>
+    <header>
+        <h1>海大路在何方</h1>
+    </header>
+    <div class="container">
+        <div class="sidebar">
+            <h3>功能菜单</h3>
+            <select id="transportation">
+                <option value="driving">驾车</option>
+                <option value="transit">公交</option>
+                <option value="walking">步行</option>
+            </select>
+            <ul>
+                <li><a href="#" onclick="showBestRoutes()">查看最佳路线</a></li>
+                <li><a href="#" onclick="campusVehicleManagement()">校园车辆管理</a></li>
+                <li><a href="campus_map_info.html">学校地图信息</a></li>
+            </ul>
+            <label for="start">起点：</label>
+            <input type="text" id="start" name="start" placeholder="请输入起点关键字" onkeydown="if(event.keyCode==13) document.getElementById('search-button').click()">
+
+            <label for="end">终点：</label>
+            <input type="text" id="end" name="end" placeholder="请输入终点关键字">
+            <br>
+            <form onsubmit="searchRoute(); return false;">
+                <button type="submit" id="search-button">搜索</button>
+            </form>
+            <button type="button" id="clear-button" onclick="clearSearch()">清空</button>
+            <div id="result-box"></div>
+        </div>
+
+        <div class="map-container">
+            <div id="map" style="width: 100%; height: 100%;"></div>
+            <script type="text/javascript">
+                // GL版命名空间为BMapGL
+                // 按住鼠标右键，修改倾斜角和角度
+                var bmap = new BMapGL.Map("map");    // 创建Map实例
+                bmap.centerAndZoom(new BMapGL.Point(121.911858, 30.88028), 17);  // 初始化地图,设置中心点坐标和地图级别
+                bmap.enableScrollWheelZoom(true);     // 开启鼠标滚轮缩放
+                var path = [
+        // { 'lng': 121.913727, 'lat': 30.882696 },     //1B教学楼
+        // { 'lng': 121.913197, 'lat': 30.883164 },     //2B教学楼
+        { 'lng': 121.912595, 'lat': 30.883699 },     //3B教学楼
+
+        //121.912422,30.883864
+        { 'lng': 121.912422, 'lat': 30.883864 },     //#1转弯处
+        //121.912772,30.884139121.912784,30.884129
+        { 'lng': 121.912784, 'lat': 30.884129 },     //#2转弯处
+        //121.912121,30.884681 121.912133,30.884676
+        { 'lng': 121.912121, 'lat': 30.884681 },     //
+        //121.912355,30.884871 121.912371,30.884858
+        { 'lng': 121.912371, 'lat': 30.884858 },     //
+        //路口121.911218,30.885851
+        { 'lng': 121.911218, 'lat': 30.885851 },     //
+        //121.909907,30.886978 121.909918,30.886961
+        { 'lng': 121.909918, 'lat': 30.886961 },     //
+        //121.909242,30.886382
+        { 'lng': 121.909242, 'lat': 30.886382 },     //
+        //121.908959,30.886606
+        { 'lng': 121.908959, 'lat': 30.886606 }     //
+
+        // { 'lng': 121.912052, 'lat': 30.88404 },     //3D教学楼
+        // { 'lng': 121.908625, 'lat': 30.886798 },     //快递站
+        // { 'lng': 121.90895, 'lat': 30.886008 },     //自动快递柜
+        // { 'lng': 121.905451, 'lat': 30.884474 },     //校医院
+        // { 'lng': 121.908319, 'lat': 30.881351 },     //北广超市
+        // { 'lng': 121.908195, 'lat': 30.881987 },     //海鑫食堂
+    ];
+            
+                var point = [];
+                for (var i = 0; i < path.length; i++) {
+                    point.push(new BMapGL.Point(path[i].lng, path[i].lat));
+                }
+                var pl = new BMapGL.Polyline(point);
+                setTimeout('start()', 1000);
+                function start () {
+                    trackAni = new BMapGLLib.TrackAnimation(bmap, pl, {
+                        overallView: true,
+                        tilt: 30,
+                        duration: 15000,
+                        delay: 300
+                    });
+                    trackAni.start();
+                }
+            </script>
+        </div>
+    </div>
+			
+
+    
+</body>
+</html>

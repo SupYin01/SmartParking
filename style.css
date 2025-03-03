@@ -1,0 +1,74 @@
+<style>
+        /* 样式部分 */
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center; /* 居中标题内容 */
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .sidebar {
+            width: 250px;
+            padding: 20px;
+            box-sizing: border-box; /* 让 padding 在计算宽度时包含在内 */
+            height: 100vh; /* 使用视口高度作为高度 */
+            overflow: auto; /* 如果内容过多，启用滚动条 */
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+
+        .map-container {
+            flex-grow: 1;
+            /* height: 100%; */
+            position: relative; /*让地图容器相对定位*/
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 5px 10px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        #result-box {
+            margin-top: 10px;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+</style>

@@ -1,0 +1,62 @@
+<script type="text/javascript" 
+		src="https://api.map.baidu.com/api?v=2.0&ak=pLik9yt1mQqgySIoGKOmvf9plouGEuKy"></script>
+    <script type="text/javascript">
+         // 初始化地图
+        function initMap() {
+            // 创建地图实例
+            map = new BMap.Map("map");
+
+            // 设置地图中心点坐标和缩放级别
+            var point = new BMap.Point(121.911858, 30.88028);
+            map.centerAndZoom(point, 18); // 调整缩放级别以适应你的需求
+
+            // 添加学校名称标注
+            var label = new BMap.Label("上海海事大学", { offset: new BMap.Size(20, -10) });
+            label.setStyle({ color: "#333", fontWeight: "bold" });
+            map.addOverlay(label);
+
+            // 启用滚轮缩放
+            map.enableScrollWheelZoom(true);
+
+            // 初始化起点和终点输入框的 Suggestion 功能
+            startSuggestion = new BMap.Autocomplete({ input: "start", location: map });
+            endSuggestion = new BMap.Autocomplete({ input: "end", location: map });
+
+            // 监听选中提示项事件，当用户选中一个提示项时，就会自动调用该函数
+            startSuggestion.addEventListener("onconfirm", function(event) {
+                var item = event.item;
+                var value = item.value;
+                startSuggestion.hide();
+            });
+
+            endSuggestion.addEventListener("onconfirm", function(event) {
+                var item = event.item;
+                var value = item.value;
+                endSuggestion.hide();
+            });
+
+            // 创建图层对象
+            var overlay = new BMap.Overlay();
+
+            // 实现图层的初始化和绘制
+            overlay.initialize = function(map) {
+                this._map = map;
+                var div = document.createElement("div");
+                div.style.position = "absolute";
+                div.style.top = "60px";
+                div.style.right = "20px";
+                div.style.width = "auto";
+                div.style.height = "auto";
+                div.style.backgroundColor = "#fff";
+                div.style.padding = "5px";
+                div.style.borderRadius = "5px";
+                div.innerHTML = "<p>欢迎使用校园导航！</p><p>在起点和终点输入框输入关键字，然后点击搜索按钮，即可打开路线规划结果。</p>";
+                map.getPanes().labelPane.appendChild(div);
+                return div;
+            };
+
+            // 将图层添加到地图中
+            map.addOverlay(overlay);
+        }
+		</script>
+        </div>
